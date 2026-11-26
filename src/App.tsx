@@ -10,7 +10,7 @@ const labels:Record<Status,string>={todo:"To do",in_progress:"In progress",done:
 
 export default function App(){
  const [active,setActive]=useState("Overview"),[tasks,setTasks]=useState<Task[]>([]),[connected,setConnected]=useState(false),[modal,setModal]=useState(false),[mobile,setMobile]=useState(false),[query,setQuery]=useState(""),[title,setTitle]=useState(""),[priority,setPriority]=useState<Priority>("medium"),[saving,setSaving]=useState(false);
- useEffect(()=>{fetch("/api/tasks").then(r=>{if(!r.ok)throw Error();return r.json()}).then((d: { tasks: Task[] })=>{setTasks(d.tasks);setConnected(true)}).catch(()=>setTasks(demo))},[]);
+ useEffect(()=>{fetch("/api/tasks").then(async r=>{if(!r.ok)throw Error();return await r.json() as { tasks: Task[] }}).then(d=>{setTasks(d.tasks);setConnected(true)}).catch(()=>setTasks(demo))},[]);
  const filtered=useMemo(()=>tasks.filter(t=>t.title.toLowerCase().includes(query.toLowerCase())),[tasks,query]);
  const done=tasks.filter(t=>t.status==="done").length,progress=tasks.filter(t=>t.status==="in_progress").length;
  async function createTask(e:React.FormEvent){e.preventDefault();if(!title.trim())return;const task:Task={id:crypto.randomUUID(),title:title.trim(),status:"todo",priority,assignee:"Unassigned"};setSaving(true);try{const r=await fetch("/api/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(task)});if(!r.ok)throw Error();const d=await r.json() as { task: Task };setTasks(v=>[d.task,...v]);setConnected(true)}catch{setTasks(v=>[task,...v])}finally{setSaving(false);setTitle("");setPriority("medium");setModal(false)}}
